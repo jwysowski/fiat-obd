@@ -1,0 +1,1 @@
+set(CHECK_INSTALL_DIR "/usr/bin")
