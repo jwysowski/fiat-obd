@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "pl.h"
 
+static const char *error_find(enum key_error key);
+static const char *info_find(enum key_info key);
+
 struct info_map info[] = {
 	{ ACRELAY,   "" },
 	{ ADGAIN,    "" },

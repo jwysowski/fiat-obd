@@ -24,6 +24,14 @@ struct adjust_element {
 	char	*type;
 };
 
+struct error_state {
+	int	is_active;
+	int	is_verified;
+	int	is_stored;
+	char	count;
+	char	*reason;
+};
+
 struct error_element {
 	char			*description;
 	struct error_state	state;
@@ -42,14 +50,6 @@ struct error_element {
 struct state_element {
 	char	*description;
 	int	value;
-};
-
-struct error_state {
-	int	is_active;
-	int	is_verified;
-	int	is_stored;
-	char	count;
-	char	*reason;
 };
 
 struct query_result {
