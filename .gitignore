@@ -12,6 +12,7 @@ tests/cmake_install.cmake
 tests/iaw16f_check
 tests/Makefile
 cmake_install.cmake
+CMakeCache.txt
 config.h
 CTestTestfile.cmake
 Makefile
