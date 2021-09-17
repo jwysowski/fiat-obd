@@ -1,7 +1,7 @@
 #ifndef IAW16F_H
 #define IAW16F_H
 
-#include "data_structs.h"
+#include "../data_structs.h"
 
 struct iaw16f {
 	const char		*name;

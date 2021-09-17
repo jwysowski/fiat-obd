@@ -1,2 +1,17 @@
 .vscode/*
 uncrustify.cfg
+CMakeFiles/*
+src/CMakeFiles/*
+src/cmake_install.cmake
+src/libiaw16f.a
+src/main
+src/Makefile
+Testing/*
+tests/CMakeFiles/*
+tests/cmake_install.cmake
+tests/iaw16f_check
+tests/Makefile
+cmake_install.cmake
+config.h
+CTestTestfile.cmake
+Makefile
