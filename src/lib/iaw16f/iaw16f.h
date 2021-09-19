@@ -6,15 +6,15 @@
 struct iaw16f {
 	const char		*name;
 	const char		*long_name;
-	const char		*car;
+	const char		*car[2];
 	int			has_immo;
 	char			*iso;
 	char			*codric;
-	const int		init_baud;
-	const int		comm_baud;
+	int			init_baud;
+	int			comm_baud;
 	int			is_connected;
-	char			buffer[255];
-	int			valid[255];
+	uint8_t			buffer[255];
+	uint8_t			valid[255];
 
 	struct data_element	engine_data[30];
 	struct test_element	active_tests[7];
@@ -22,8 +22,8 @@ struct iaw16f {
 	struct error_element	engine_errors[23];
 	struct error_element	immo_errors[7];
 
-	char			engine_err_req[12];
-	char			immo_err_req[2];
+	uint8_t			engine_err_req[12];
+	uint8_t			immo_err_req[2];
 	struct test_element	clear_codes;
 };
 

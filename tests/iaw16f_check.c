@@ -9,6 +9,7 @@ START_TEST(init_ecu_test) {
 
 	ck_assert_str_eq(ecu->name, NAME);
 	ck_assert_str_eq(ecu->long_name, LONG_NAME);
+	ck_assert_int_eq(ecu->has_immo, 0);
 
 	free_ecu(ecu);
 }
