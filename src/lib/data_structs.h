@@ -8,21 +8,22 @@ struct data_element {
 	char	*unit;
 	char	*value;
 	uint8_t *request;
+	double	val_decode;
 };
 
 struct test_element {
 	char	*description;
-	uint8_t *request_set;
-	uint8_t time_out;
 	int	is_engine_on;
+	uint8_t time_out;
+	uint8_t *request_set;
 };
 
 struct adjust_element {
+	char	*description;
+	uint8_t status;
+	uint8_t status_mask;
 	uint8_t *pre_set;
 	uint8_t *post_set;
-	char	*description;
-	uint8_t *status;
-	uint8_t *status_mask;
 	char	*type;
 };
 
