@@ -1,6 +1,6 @@
 #include <check.h>
 #include "iaw16f_check.h"
-#include "../src/libs/iaw16f/iaw16f.h"
+#include "../src/lib/iaw16f/iaw16f.h"
 
 START_TEST(init_ecu_test) {
 	struct iaw16f *ecu;
