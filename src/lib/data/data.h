@@ -1,9 +1,11 @@
 #ifndef PL_H
 #define PL_H
 
+#include "../data_structs.h"
+
 #define UNITS_SIZE              31
 #define INFO_SIZE               31
-#define ERRORS_SIZE             3
+#define ENGINE_ERRORS_SIZE      23
 #define ACTIVE_TESTS_SIZE       7
 #define ADJUSTMENTS_SIZE        5
 
@@ -61,10 +63,31 @@ enum adjustments_key {
 	STEP_SET
 };
 
-enum error_key {
-	NO_SYNC_ERR,
-	START_DIS_ERR,
-	UNI_CODE_ERR
+enum engine_error_key {
+	ERR_TPS,
+	ERR_MAP,
+	ERR_LAMBDA,
+	ERR_ECT,
+	ERR_IAT,
+	ERR_BATT_V,
+	ERR_IDLE_REG,
+	ERR_I8,
+	ERR_INJ,
+	ERR_COIL1,
+	ERR_COIL2,
+	ERR_IAV,
+	ERR_EVAP,
+	ERR_AIR_CO,
+	ERR_FUEL_PUMP,
+	ERR_GEN_REL,
+	ERR_AC_PARAM,
+	ERR_RAM,
+	ERR_ROM,
+	ERR_EEPROM,
+	ERR_CPU,
+	ERR_RPM_SENS,
+	ERR_F7,
+	ERR_F8
 };
 
 struct adjustments_map {
@@ -78,11 +101,10 @@ struct adjustments_map {
 };
 
 
-struct decode_map {
+struct engine_info_decode {
 	enum engine_info_key	key;
-	double			(*function)(uint8_t *);
+	double			(*info_decode)(uint8_t *);
 };
-
 
 struct units_map {
 	enum engine_info_key	key;
@@ -104,15 +126,28 @@ struct active_tests_map {
 
 
 struct errors_map {
-	enum error_key	key;
-	char		*description;
+	enum engine_error_key	key;
+	char			*description;
+
+	uint8_t			ra_base;
+	uint8_t			rv_base;
+	uint8_t			rs_base;
+	uint8_t			r_base;
+	uint8_t			ra_ext;
+	uint8_t			rv_ext;
+	uint8_t			rs_ext;
+	uint8_t			rb_ext;
+	char			*h_ext;
+	char			*l_ext;
+
+	struct error_state	*(*err_decode)(struct error_element *, uint8_t *);
 };
 
 extern struct adjustments_map adjustments[ADJUSTMENTS_SIZE];
 extern struct active_tests_map tests[ACTIVE_TESTS_SIZE];
-extern struct decode_map functions[INFO_SIZE];
+extern struct engine_info_decode info_decode_functions[INFO_SIZE];
 extern struct units_map units[UNITS_SIZE];
 extern struct engine_map engine_info[INFO_SIZE];
-extern struct errors_map errors[ERRORS_SIZE];
+extern struct errors_map engine_errors[ENGINE_ERRORS_SIZE];
 
 #endif

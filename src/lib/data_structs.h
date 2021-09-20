@@ -37,7 +37,6 @@ struct error_state {
 
 struct error_element {
 	char			*description;
-	struct error_state	state;
 
 	uint8_t			ra_base;
 	uint8_t			rv_base;
@@ -49,6 +48,8 @@ struct error_element {
 	uint8_t			rb_ext;
 	char			*h_ext;
 	char			*l_ext;
+
+	struct error_state	state;
 };
 
 struct state_element {

@@ -18,18 +18,21 @@
 
 // 	struct data_element	engine_data[30]; +
 // 	struct test_element	active_tests[7]; +
-// 	struct adjust_element	adjustments[5];
-// 	struct error_element	engine_errors[23];
+// 	struct adjust_element	adjustments[5]; +
+// 	struct error_element	engine_errors[23]; +
 // 	struct error_element	immo_errors[7];
 
 // 	char			engine_err_req[12];
 // 	char			immo_err_req[2];
 // 	struct test_element	clear_codes;
 // };
+static void init_buffer(struct iaw16f *ecu);
+static void init_engine_data(struct iaw16f *ecu);
+static void init_tests(struct iaw16f *ecu);
+static void init_adjustments(struct iaw16f *ecu);
+static void init_engine_errors(struct iaw16f *ecu);
 
 void init_ecu(struct iaw16f *ecu) {
-	uint8_t request_init = 1;
-
 	ecu->name = "IAW-6F/16F";
 	ecu->long_name = "Magneti-Marelli IAW-6F/16F SPI";
 	ecu->car[0] = "55D085139754";
@@ -41,10 +44,22 @@ void init_ecu(struct iaw16f *ecu) {
 	ecu->comm_baud = 7680;
 	ecu->is_connected = 1;
 
+	init_buffer(ecu);
+	init_engine_data(ecu);
+	init_tests(ecu);
+	init_adjustments(ecu);
+	init_engine_errors(ecu);
+}
+
+static void init_buffer(struct iaw16f *ecu) {
 	for (int i = 0; i < BUFFER_VALID_SIZE; i++) {
 		ecu->buffer[i] = i;
 		ecu->valid[i] = i % 2;
 	}
+}
+
+static void init_engine_data(struct iaw16f *ecu) {
+	uint8_t request_init = 1;
 
 	for (int i = 0; i < ENGINE_DATA_SIZE; i++) {
 		ecu->engine_data[i].description = engine_info[i].description;
@@ -78,9 +93,11 @@ void init_ecu(struct iaw16f *ecu) {
 				ecu->engine_data[i].request[j] = request_init;
 		}
 
-		ecu->engine_data[i].val_decode = (*(functions[i].function))(ecu->buffer);
+		ecu->engine_data[i].val_decode = (*(info_decode_functions[i].info_decode))(ecu->buffer);
 	}
+}
 
+static void init_tests(struct iaw16f *ecu) {
 	for (int i = 0; i < ACTIVE_TESTS_SIZE; i++) {
 		ecu->active_tests[i].description = tests[i].description;
 		ecu->active_tests[i].is_engine_on = tests[i].is_engine_on;
@@ -98,8 +115,51 @@ void init_ecu(struct iaw16f *ecu) {
 		else
 			*(ecu->active_tests[i].request_set) = i + 0x80 + 1;
 	}
+}
 
+static void init_adjustments(struct iaw16f *ecu) {
 	for (int i = 0; i < ADJUSTMENTS_SIZE; i++) {
+		ecu->adjustments[i].description = adjustments[i].description;
+		ecu->adjustments[i].status = adjustments[i].status;
+		ecu->adjustments[i].status_mask = adjustments[i].status_mask;
+
+		ecu->adjustments[i].pre_set = (uint8_t *)malloc(sizeof(uint8_t) * adjustments[i].pre_set_number_of_bytes);
+
+		if (ecu->adjustments[i].pre_set == NULL) {
+			perror(EXIT_FAILURE);
+			exit(1);
+		}
+
+		if (adjustments[i].post_set_number_of_bytes != 0) {
+			ecu->adjustments[i].post_set = (uint8_t *)malloc(sizeof(uint8_t) * adjustments[i].post_set_number_of_bytes);
+
+			if (ecu->adjustments[i].post_set == NULL) {
+				perror(EXIT_FAILURE);
+				exit(1);
+			}
+		}
+
+		ecu->adjustments[i].type = adjustments[i].type;
+	}
+}
+
+static void init_engine_errors(struct iaw16f *ecu) {
+	for (int i = 0; i < ENGINE_ERRORS_SIZE; i++) {
+		ecu->engine_errors[i].description = engine_errors[i].description;
+
+		ecu->engine_errors[i].ra_base = engine_errors[i].ra_base;
+		ecu->engine_errors[i].rv_base = engine_errors[i].rv_base;
+		ecu->engine_errors[i].rs_base = engine_errors[i].rs_base;
+		ecu->engine_errors[i].r_base = engine_errors[i].r_base;
+		ecu->engine_errors[i].ra_ext = engine_errors[i].ra_ext;
+		ecu->engine_errors[i].rv_ext = engine_errors[i].rv_ext;
+		ecu->engine_errors[i].rs_ext = engine_errors[i].rs_ext;
+		ecu->engine_errors[i].rb_ext = engine_errors[i].rb_ext;
+
+		ecu->engine_errors[i].h_ext = engine_errors[i].h_ext;
+		ecu->engine_errors[i].l_ext = engine_errors[i].l_ext;
+
+		ecu->engine_errors[i].state = *(*(engine_errors[i].err_decode))(&(ecu->engine_errors[i]), ecu->buffer);
 	}
 }
 

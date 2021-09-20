@@ -2,9 +2,10 @@
 #include <stdint.h>
 #include "data.h"
 
-static const char *error_find(enum error_key key);
+static const char *engine_error_find(enum engine_error_key key);
 static const char *info_find(enum engine_info_key key);
 
+/*Engine info decoding functions*/
 static double periode(uint8_t *buffer);
 static double t_inj_ap(uint8_t *buffer);
 static double mp2_mp8(uint8_t *buffer);
@@ -37,14 +38,46 @@ static double sta_mix_acok(uint8_t *buffer);
 static double sta_step_acok(uint8_t *buffer);
 static double sta_p_latch_ok(uint8_t *buffer);
 
-// struct adjustments_map adjustments[] = {
-// 	{ TOGGLE_TRIM_AC, }
-// 	{ TOGGLE_STEP_AC, }
-// 	{ TRIM_RESET,	  }
-// 	{ STEP_RESET,	  }
-// 	{ TRIM_SET,	  }
-// 	{ STEP_SET,	  }
-// };
+/*Engine errors decoding functions*/
+static struct error_state *err16f(struct error_element *state, uint8_t *buffer);
+static struct error_state *err_code(struct error_element *state, uint8_t *buffer);
+
+struct errors_map engine_errors[] = {
+	{ ERR_TPS,	 "Czujnik położenia przepustnicy", 0x10, 0, 0x14, 0, 0x2B, 0, 0x2E, 0, "Zwarcie do GND",	     "Zwarcie do Vcc",	       &err16f },
+	{ ERR_MAP,	 "Czujnik MAP",			   0x10, 0, 0x14, 1, 0x2B, 0, 0x2E, 1, "Zwarcie do Vcc",	     "Zwarcie do GND",	       &err16f },
+	{ ERR_LAMBDA,	 "Sonda lambda",		   0x10, 0, 0x14, 2, 0x2B, 0, 0x2E, 2, "",			     "",		       &err16f },
+	{ ERR_ECT,	 "Czujnik temperatury wody",	   0x10, 0, 0x14, 3, 0x2B, 0, 0x2E, 3, "Zwarcie do GND",	     "Zwarcie do Vcc",	       &err16f },
+	{ ERR_IAT,	 "Czujnik temperatury powietrza",  0x10, 0, 0x14, 4, 0x2B, 0, 0x2E, 4, "Zwarcie do GND",	     "Zwarcie do Vcc",	       &err16f },
+	{ ERR_BATT_V,	 "Napięcie akumulatora",	   0x10, 0, 0x14, 5, 0x2B, 0, 0x2E, 5, "Ponad MAX",		     "Poniżej MIN",	       &err16f },
+	{ ERR_IDLE_REG,	 "Regulacja biegu jałowego",	   0x10, 0, 0x14, 6, 0x2B, 0, 0x2E, 6, "",			     "",		       &err16f },
+	{ ERR_I8,	 "Nieznay błąd INPUT (8)",	   0x10, 0, 0x14, 7, 0x2B, 0, 0x2E, 7, "",			     "",		       &err16f },
+	{ ERR_INJ,	 "Wtryskiwacz",			   0x11, 0, 0x15, 0, 0x2C, 0, 0x2F, 0, "Zwarcie lub zab. termiczne", "Przerwa",		       &err16f },
+	{ ERR_COIL1,	 "Cewka zapłonowa 1",		   0x11, 0, 0x15, 1, 0x2C, 0, 0x2F, 1, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_COIL2,	 "Cewka zapłonowa 1",		   0x11, 0, 0x15, 2, 0x2C, 0, 0x2F, 2, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_IAV,	 "Silnik krokowy biegu jałowego",  0x11, 0, 0x15, 3, 0x2C, 0, 0x2F, 3, "Zwarcie lub zab. termiczne", "Przerwa",		       &err16f },
+	{ ERR_EVAP,	 "Zawór EVAP",			   0x11, 0, 0x15, 4, 0x2C, 0, 0x2F, 4, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_AIR_CO,	 "Klimatyzator",		   0x11, 0, 0x15, 5, 0x2C, 0, 0x2F, 5, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_FUEL_PUMP, "Pompa paliwa",		   0x11, 0, 0x15, 6, 0x2C, 0, 0x2F, 6, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_GEN_REL,	 "Przekaźnik główny",		   0x11, 0, 0x15, 7, 0x2C, 0, 0x2F, 7, "Zwarcie do Vcc",	     "Zwarcie do GND/Przerwa", &err16f },
+	{ ERR_AC_PARAM,	 "Parametr autokalibracji",	   0x12, 0, 0x16, 0, 0x2D, 0, 0x30, 0, "Max BOGATA",		     "Max UBOGA",	       &err16f },
+	{ ERR_RAM,	 "RAM",				   0x12, 0, 0x16, 1, 0x2D, 0, 0x30, 1, "",			     "",		       &err16f },
+	{ ERR_ROM,	 "ROM",				   0x12, 0, 0x16, 2, 0x2D, 0, 0x30, 2, "",			     "",		       &err16f },
+	{ ERR_EEPROM,	 "EEPROM",			   0x12, 0, 0x16, 3, 0x2D, 0, 0x30, 3, "",			     "",		       &err16f },
+	{ ERR_CPU,	 "CPU",				   0x12, 0, 0x16, 4, 0x2D, 0, 0x30, 4, "",			     "",		       &err16f },
+	{ ERR_RPM_SENS,	 "Czujnik położenia wału",	   0x12, 0, 0x16, 5, 0x2D, 0, 0x30, 5, "",			     "",		       &err16f },
+	{ ERR_F7,	 "Nieznany błąd FUNC (7)",	   0x12, 0, 0x16, 6, 0x2D, 0, 0x30, 6, "",			     "",		       &err16f },
+	{ ERR_F8,	 "Nieznany błąd FUNC (8)",	   0x12, 0, 0x16, 7, 0x2D, 0, 0x30, 7, "",			     "",		       &err16f }
+};
+
+
+struct adjustments_map adjustments[] = {
+	{ TOGGLE_TRIM_AC, "Włącz/wyłącz autokalibrację składu mieszanki",  0x00, 0x00, 1, 0, "toggle"  },
+	{ TOGGLE_STEP_AC, "Włącz/wyłącz autokalibrację silnika krokowego", 0x00, 0x00, 1, 0, "toggle"  },
+	{ TRIM_RESET,	  "Reset autokalibracji składu mieszanki",	   0x00, 0x00, 2, 0, "toggle"  },
+	{ STEP_RESET,	  "Reset autokalibracji silnika krokowego",	   0x00, 0x00, 2, 0, "toggle"  },
+	{ TRIM_SET,	  "Ustaw korektę mieszanki (TRIMRAM)",		   0x0F, 0xFF, 1, 1, "onebyte" },
+	{ STEP_SET,	  "Ustaw korektę wolnych obrotów (ALFAFTR)",	   0x29, 0xFF, 1, 1, "onebyte" }
+};
 
 struct active_tests_map tests[] = {
 	{ FUEL_PUMP,	 "Przekaźnik pompy paliwa", 0, 30 },
@@ -57,7 +90,7 @@ struct active_tests_map tests[] = {
 	{ GENERIC_RELAY, "Przekaźnik główny",	    0, 30 }
 };
 
-struct decode_map functions[] = {
+struct engine_info_decode info_decode_functions[] = {
 	{ PERIODE,	  &periode	  },
 	{ T_INJ_AP,	  &t_inj_ap	  },
 	{ AVANCE,	  &avance	  },
@@ -159,30 +192,22 @@ struct engine_map engine_info[] = {
 	{ STA_P_LATCH_OK, "Linia zasialnia OK",						     1 }
 };
 
-
-
-struct errors_map errors[] = {
-	{ NO_SYNC_ERR,	 "0" },
-	{ START_DIS_ERR, "0" },
-	{ UNI_CODE_ERR,	 "0" }
-};
-
 void info_log(enum engine_info_key key) {
 	fputs(info_find(key), stdout);
 }
 
-void error_log(enum error_key key) {
+void error_log(enum engine_error_key key) {
 	fputs(error_find(key), stdout);
 }
 
-static const char *error_find(enum error_key key) {
-	for (int i = 0; i < sizeof(errors) / sizeof(errors[0]); i++)
-		if (key == errors[i].key)
-			return errors[i].description;
+static const char *engine_error_find(enum engine_error_key key) {
+	for (int i = 0; i < ENGINE_ERRORS_SIZE; i++)
+		if (key == engine_errors[i].key)
+			return engine_errors[i].description;
 }
 
 static const char *engine_info_find(enum engine_info_key key) {
-	for (int i = 0; i < sizeof(engine_info) / sizeof(engine_info[0]); i++)
+	for (int i = 0; i < INFO_SIZE; i++)
 		if (key == engine_info[i].key)
 			return engine_info[i].description;
 }
@@ -345,4 +370,22 @@ static double sta_step_acok(uint8_t *buffer) {
 /*Power-Latch OK*/
 static double sta_p_latch_ok(uint8_t *buffer) {
 	return (double)((buffer[0x2A] & 6) == 0);
+}
+
+static struct error_state *err16f(struct error_element *element, uint8_t *buffer) {
+	element->state.is_active = buffer[element->ra_base] & element->r_base ? 1 : 0;
+	element->state.is_stored = buffer[element->rs_base] & element->r_base ? 1 : 0;
+	element->state.reason = buffer[element->rs_base] & element->r_base ?
+				buffer[element->rs_ext] & element->rb_ext : buffer[element->ra_ext] & element->rb_ext ?
+				element->h_ext : element->l_ext;
+
+	return &(element->state);
+}
+
+static struct error_state *err_code(struct error_element *element, uint8_t *buffer) {
+	element->state.is_active = buffer[element->ra_base] & element->r_base ? 1 : 0;
+	element->state.is_stored = buffer[element->rs_base] & element->r_base ? 1 : 0;
+	element->state.reason = "FIAT CODE";
+
+	return &(element->state);
 }
