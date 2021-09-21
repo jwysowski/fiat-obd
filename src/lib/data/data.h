@@ -5,9 +5,21 @@
 
 #define UNITS_SIZE              31
 #define INFO_SIZE               31
-#define ENGINE_ERRORS_SIZE      23
-#define ACTIVE_TESTS_SIZE       7
-#define ADJUSTMENTS_SIZE        5
+#define ENGINE_ERRORS_SIZE      24
+#define ACTIVE_TESTS_SIZE       8
+#define ADJUSTMENTS_SIZE        6
+#define IMMO_ERRORS_SIZE        8
+
+enum immo_error_key {
+	ERR_NO_SYNC,
+	ERR_START_DIS,
+	ERR_UNI_CODE,
+	ERR_C4,
+	ERR_BACKDOOR,
+	ERR_KEY_CODE,
+	ERR_UNR_CODE,
+	ERR_LINK_DOWN
+};
 
 enum engine_info_key {
 	PERIODE,
@@ -90,6 +102,24 @@ enum engine_error_key {
 	ERR_F8
 };
 
+struct immo_errors_map {
+	enum immo_error_key	key;
+	char			*description;
+
+	uint8_t			ra_base;
+	uint8_t			rv_base;
+	uint8_t			rs_base;
+	uint8_t			r_base;
+	uint8_t			ra_ext;
+	uint8_t			rv_ext;
+	uint8_t			rs_ext;
+	uint8_t			rb_ext;
+	char			*h_ext;
+	char			*l_ext;
+
+	struct error_state	*(*err_decode)(struct error_element *, uint8_t *);
+};
+
 struct adjustments_map {
 	enum adjustments_key	key;
 	char			*description;
@@ -125,7 +155,7 @@ struct active_tests_map {
 };
 
 
-struct errors_map {
+struct engine_errors_map {
 	enum engine_error_key	key;
 	char			*description;
 
@@ -148,6 +178,7 @@ extern struct active_tests_map tests[ACTIVE_TESTS_SIZE];
 extern struct engine_info_decode info_decode_functions[INFO_SIZE];
 extern struct units_map units[UNITS_SIZE];
 extern struct engine_map engine_info[INFO_SIZE];
-extern struct errors_map engine_errors[ENGINE_ERRORS_SIZE];
+extern struct engine_errors_map engine_errors[ENGINE_ERRORS_SIZE];
+extern struct immo_errors_map immo_errors[IMMO_ERRORS_SIZE];
 
 #endif

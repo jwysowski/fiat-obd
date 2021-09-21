@@ -3,7 +3,7 @@
 #include "data.h"
 
 static const char *engine_error_find(enum engine_error_key key);
-static const char *info_find(enum engine_info_key key);
+static const char *engine_info_find(enum engine_info_key key);
 
 /*Engine info decoding functions*/
 static double periode(uint8_t *buffer);
@@ -42,7 +42,19 @@ static double sta_p_latch_ok(uint8_t *buffer);
 static struct error_state *err16f(struct error_element *state, uint8_t *buffer);
 static struct error_state *err_code(struct error_element *state, uint8_t *buffer);
 
-struct errors_map engine_errors[] = {
+struct immo_errors_map immo_errors[] = {
+	{ ERR_NO_SYNC,	 "Centralka CODE niezaprogramowana",		0x71, 0, 0x72, 0, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_START_DIS, "Brak zgody na uruchomienie silnika",		0x71, 0, 0x72, 1, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_UNI_CODE,	 "Centralka otrzymała 'kod uniwersalny'",	0x71, 0, 0x72, 2, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_C4,	 "Nieznany błąd CODE (4",			0x71, 0, 0x72, 3, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_BACKDOOR,	 "Aktyowowano obejście",			0x71, 0, 0x72, 4, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_KEY_CODE,	 "Błędny kod klucza",				0x71, 0, 0x72, 5, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_UNR_CODE,	 "Nieprawidłowy bądź nierozpoznany kod klucza", 0x71, 0, 0x72, 6, 0, 0, 0, 0, "", "", &err_code },
+	{ ERR_LINK_DOWN, "Nie odebrano kodu lub brak połączenia",	0x71, 0, 0x72, 7, 0, 0, 0, 0, "", "", &err_code }
+};
+
+
+struct engine_errors_map engine_errors[] = {
 	{ ERR_TPS,	 "Czujnik położenia przepustnicy", 0x10, 0, 0x14, 0, 0x2B, 0, 0x2E, 0, "Zwarcie do GND",	     "Zwarcie do Vcc",	       &err16f },
 	{ ERR_MAP,	 "Czujnik MAP",			   0x10, 0, 0x14, 1, 0x2B, 0, 0x2E, 1, "Zwarcie do Vcc",	     "Zwarcie do GND",	       &err16f },
 	{ ERR_LAMBDA,	 "Sonda lambda",		   0x10, 0, 0x14, 2, 0x2B, 0, 0x2E, 2, "",			     "",		       &err16f },
@@ -193,11 +205,11 @@ struct engine_map engine_info[] = {
 };
 
 void info_log(enum engine_info_key key) {
-	fputs(info_find(key), stdout);
+	fputs(engine_info_find(key), stdout);
 }
 
 void error_log(enum engine_error_key key) {
-	fputs(error_find(key), stdout);
+	fputs(engine_error_find(key), stdout);
 }
 
 static const char *engine_error_find(enum engine_error_key key) {

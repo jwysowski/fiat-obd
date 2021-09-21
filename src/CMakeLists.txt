@@ -1,6 +1,6 @@
 set(LIB_SOURCES
-  libs/iaw16f/iaw16f.c
-  libs/lang/pl.c
+  lib/iaw16f/iaw16f.c
+  lib/data/data.c
 )
 
 set(MAIN_SOURCES
@@ -9,8 +9,9 @@ set(MAIN_SOURCES
 
 set(HEADERS 
   ${CONFIG_HEADER}
-  libs/iaw16f/iaw16f.h
-  libs/lang/pl.h
+  lib/iaw16f/iaw16f.h
+  lib/data/data.h
+  lib/data_structs.h
 )
 
 add_library(iaw16f STATIC ${LIB_SOURCES} ${HEADERS})
@@ -23,4 +24,4 @@ install(TARGETS iaw16f
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/libs/iaw16f/iaw16f.h DESTINATION include)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib/iaw16f/iaw16f.h DESTINATION include)
